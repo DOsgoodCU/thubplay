@@ -1,0 +1,13 @@
+site_name: Experiment
+theme:
+  name: material
+  logo: ""
+
+  features:
+    #- navigation.tabs # uncomment this to make navigation on top
+    - navigation.sections
+    - toc.integrate
+    - navigation.footer
+
+nav:
+- 'index.md'
