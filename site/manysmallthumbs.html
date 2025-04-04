@@ -1,0 +1,165 @@
+i<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Links</title>
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            justify-content: center;
+            padding: 10px;
+        }
+        .iframe-wrapper {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            overflow: hidden;
+            display: inline-block;
+            border: 1px solid black;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .iframe-wrapper iframe {
+            width: 1000px;
+            height: 500px;
+            transform: scale(0.5);
+            transform-origin: top left;
+        }
+        .clickable-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+        .iframe-title {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+            padding: 5px;
+            font-size: 16px;
+            z-index: 15;
+        }
+        .iframe-wrapper:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: box-shadow 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+	<!-- Mali iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Mali</div>
+	    <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/mali" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/mali"></iframe>
+	</div>
+
+	<!-- Mauritania iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Mauritania</div>
+	    <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/mauritania" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/mauritania"></iframe>
+	</div>
+
+	<!-- Burkina Faso iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Burkina Faso</div>
+	    <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/burkinafaso" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/burkinafaso"></iframe>
+	</div>
+
+	<!-- Chad iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Chad</div>
+	    <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/chad" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/chad"></iframe>
+	</div>
+
+	<!-- Ethiopia Somali MAM iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Ethiopia Somali MAM</div>
+	    <a href="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_somali_mam/" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_somali_mam/"></iframe>
+	</div>
+
+	<!-- Ethiopia Somali OND iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Ethiopia Somali OND</div>
+	    <a href="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_somali_ond/" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_somali_ond/"></iframe>
+	</div>
+
+	<!-- Ethiopia Oromia MAM iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Ethiopia Oromia MAM</div>
+	    <a href="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_oromia_mam/" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_oromia_mam/"></iframe>
+	</div>
+
+	<!-- Ethiopia Oromia OND iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Ethiopia Oromia OND</div>
+	    <a href="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_oromia_ond/" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_oromia_ond/"></iframe>
+	</div>
+
+	<!-- Ethiopia iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Ethiopia</div>
+	    <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia"></iframe>
+	</div>
+
+	<!-- Ethiopia OND iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Ethiopia OND</div>
+	    <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia-ond" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia-ond"></iframe>
+	</div>
+
+	<!-- Southern Oromia iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Southern Oromia</div>
+	    <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia"></iframe>
+	</div>
+
+	<!-- Southern Oromia OND iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Southern Oromia OND</div>
+	    <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia-ond" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia-ond"></iframe>
+	</div>
+
+	<!-- Ethiopia AA Manual iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Ethiopia AA Manual</div>
+	    <a href="https://fist.iri.columbia.edu/publications/docs/Ethiopia_AA_Manual_2024/" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://fist.iri.columbia.edu/publications/docs/Ethiopia_AA_Manual_2024/"></iframe>
+	</div>
+
+	<!-- Ethiopia AA Final Report iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Ethiopia AA Final Report</div>
+	    <a href="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_final_report_2024/" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_final_report_2024/"></iframe>
+	</div>
+
+	<!-- Niger iframe -->
+	<div class="iframe-wrapper">
+	    <div class="iframe-title">Niger</div>
+	    <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/niger" target="_blank" class="clickable-overlay"></a>
+	    <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/niger"></iframe>
+	</div>
+
+    </div>
+</body>
+</html>
+
