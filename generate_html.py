@@ -1,18 +1,54 @@
-def generate_html(df, output_file):
-    with open(output_file, 'w') as f:
-        f.write("""<!DOCTYPE html>
+import pandas as pd
+import argparse
+
+# Load CSV
+df = pd.read_csv("dashboards.csv")
+
+# Parse command-line arguments for filtering
+parser = argparse.ArgumentParser(description="Generate HTML dashboards based on filtered CSV data.")
+parser.add_argument("--filter", nargs='*', help="Filter conditions as key-value pairs (e.g., --filter Country Ethiopia Type 'Design Dashboard'). For multiple values for a single column, use a comma-separated list (e.g., --filter Season JAS,OND).")
+args = parser.parse_args()
+
+# Apply filters
+if args.filter:
+    filter_dict = {}
+    it = iter(args.filter)
+    for x in it:
+        try:
+            key = x
+            value = next(it)
+            if ',' in value:
+                filter_dict[key] = value.split(',')
+            else:
+                filter_dict[key] = [value]
+        except StopIteration:
+            print(f"Warning: Missing value for filter key '{x}'. Skipping.")
+            break
+
+    for column, values in filter_dict.items():
+        if column in df.columns:
+            # Ensure the column in DataFrame is of string type for case-insensitive comparison if necessary
+            df[column] = df[column].astype(str)
+            # Filter rows where the column value is in the list of specified values (case-insensitive)
+            df = df[df[column].str.lower().isin([v.lower() for v in values])]
+        else:
+            print(f"Warning: Column '{column}' not found in the CSV. Skipping this filter.")
+
+# Start HTML
+html = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Links</title>
     <style>
-        :root { 
+        :root {
             --framewidth: 200px;
             --frameheight: 200px;
             --wrapperframeratiow2h: 2.00;
             --framemult: 7;
         }
+
         .grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(var(--framewidth), 1fr));
@@ -62,16 +98,49 @@ def generate_html(df, output_file):
     </style>
 </head>
 <body>
-""")
-        for _, row in df.iterrows():
-            title = row.get('Country', 'Dashboard')  # You may need to change 'Title' to the actual column name
-            url = row['url'] if 'url' in row else row['URL']
-            f.write(f"""
+<div class="grid-container">
+"""
+
+# Add each iframe block for filtered rows
+for _, row in df.iterrows():
+    # Construct a meaningful title for the dashboard
+    title_parts = []
+    if pd.notna(row["Country"]):
+        title_parts.append(row["Country"])
+    if pd.notna(row["SubRegion (if applicable)"]):
+        title_parts.append(row["SubRegion (if applicable)"])
+    if pd.notna(row["Season"]):
+        title_parts.append(row["Season"])
+    if pd.notna(row["Type"]):
+        title_parts.append(row["Type"])
+
+    # Fallback if no specific parts are available to form a title
+    if not title_parts:
+        title = "Untitled Dashboard"
+    else:
+        title = " ".join(title_parts).strip()
+
+
+    url = row["CU URL"] # Use the "CU URL" column for the link [cite: 1]
+
+    html += f"""
     <div class="iframe-wrapper">
         <div class="iframe-title">{title}</div>
         <a href="{url}" target="_blank" class="clickable-overlay"></a>
         <iframe src="{url}"></iframe>
     </div>
-""")
-        f.write("</body>\n</html>")
+    """
+
+# Close HTML
+html += """
+</div>
+</body>
+</html>
+"""
+
+# Save to file
+with open("filtered_dashboards.html", "w", encoding="utf-8") as f:
+    f.write(html)
+
+print("Generated filtered_dashboards.html")
 

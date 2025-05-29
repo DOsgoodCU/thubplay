@@ -1,17 +1,18 @@
-<!DOCTYPE html>
+def generate_html(df, output_file):
+    with open(output_file, 'w') as f:
+        f.write("""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Links</title>
     <style>
-        :root {
+        :root { 
             --framewidth: 200px;
             --frameheight: 200px;
             --wrapperframeratiow2h: 2.00;
             --framemult: 7;
         }
-
         .grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(var(--framewidth), 1fr));
@@ -61,38 +62,16 @@
     </style>
 </head>
 <body>
-<div class="grid-container">
+""")
+        for _, row in df.iterrows():
+            title = row.get('Title', 'Dashboard')  # You may need to change 'Title' to the actual column name
+            url = row['url'] if 'url' in row else row['URL']
+            f.write(f"""
+    <div class="iframe-wrapper">
+        <div class="iframe-title">{title}</div>
+        <a href="{url}" target="_blank" class="clickable-overlay"></a>
+        <iframe src="{url}"></iframe>
+    </div>
+""")
+        f.write("</body>\n</html>")
 
-    <div class="iframe-wrapper">
-        <div class="iframe-title">Ethiopia Somali MAM Design Dashboard</div>
-        <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia" target="_blank" class="clickable-overlay"></a>
-        <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia"></iframe>
-    </div>
-    
-    <div class="iframe-wrapper">
-        <div class="iframe-title">Ethiopia Somali OND Design Dashboard</div>
-        <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia-ond" target="_blank" class="clickable-overlay"></a>
-        <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia-ond"></iframe>
-    </div>
-    
-    <div class="iframe-wrapper">
-        <div class="iframe-title">Ethiopia Oromia MAM Design Dashboard</div>
-        <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia" target="_blank" class="clickable-overlay"></a>
-        <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia"></iframe>
-    </div>
-    
-    <div class="iframe-wrapper">
-        <div class="iframe-title">Ethiopia Oromia OND Design Dashboard</div>
-        <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia-ond" target="_blank" class="clickable-overlay"></a>
-        <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia-ond"></iframe>
-    </div>
-    
-    <div class="iframe-wrapper">
-        <div class="iframe-title">Niger Below 17° North JAS Design Dashboard</div>
-        <a href="https://iridl.ldeo.columbia.edu/fbfmaproom2/niger" target="_blank" class="clickable-overlay"></a>
-        <iframe src="https://iridl.ldeo.columbia.edu/fbfmaproom2/niger"></iframe>
-    </div>
-    
-</div>
-</body>
-</html>
