@@ -1,5 +1,32 @@
-Title,Country,Season,Type,URL
-Djibouti OND,Djibouti,OND,Dash,https://iridl.ldeo.columbia.edu/fbfmaproom2/djibouti-ond
-Ethiopia Somali MAM,Ethiopia,MAM,Report,https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_somali_mam/
-...
-
+CU URL,Comment,Local Host URL,Country,SubRegion (if applicable),Season,Type,Draft or released,Inactive (I),Specific date?,Behind VPN?,User,Password
+iridl.ldeo.columbia.edu/fbfmaproom2/mali,,,Mali,,JAS,Design Dashboard,Released,Active,April 4th 2025,,,
+iridl.ldeo.columbia.edu/fbfmaproom2/mauritania,,,Mauritania,,JAS,Design Dashboard,Released,Active,April 4th 2025,,,
+iridl.ldeo.columbia.edu/fbfmaproom2/burkinafaso,,,Burkina Faso,,JAS,Design Dashboard,Released,Active,April 4th 2025,,,
+iridl.ldeo.columbia.edu/fbfmaproom2/chad,,,Chad,,JAS,Design Dashboard,Released,Active,April 4th 2025,,,
+https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_somali_mam/,,,Ethiopia,Somali,MAM,Public Monitoring Dashboard,Released,Active,,,,
+https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_somali_ond/,,,Ethiopia,Somali,OND,Public Monitoring Dashboard,Released,Active,,,,
+https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_oromia_mam/,,,Ethiopia,Oromia,MAM,Public Monitoring Dashboard,Released,Active,,,,
+https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_dashboard_oromia_ond/,,,Ethiopia,Oromia,OND,Public Monitoring Dashboard,Released,Active,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia,,,Ethiopia,Somali,MAM,Design Dashboard,Released,Active,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/ethiopia-ond,,,Ethiopia,Somali,OND,Design Dashboard,Released,Active,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia,,,Ethiopia,Oromia,MAM,Design Dashboard,Released,Active,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/southern-oromia-ond,,,Ethiopia,Oromia,OND,Design Dashboard,Released,Active,,,,
+https://fist.iri.columbia.edu/publications/docs/Ethiopia_AA_Manual_2024/,,,Ethiopia,,,Project Report,Released,Active,,,,
+https://fist.iri.columbia.edu/publications/docs/ethiopia_aa_final_report_2024/,,,Ethiopia,,,Project Report,Released,Active,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/niger,,,Niger,Below 17° North,JAS,Design Dashboard,Released,Active,2022,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/malawi,,,Malawi,,DJF,Design Dashboard,Released,,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/madagascar,,,Madagascar,Grand Sud,DJF,Design Dashboard,Released,,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/madagascar-ndj,,,Madagascar,Grand Sud,NDJ,Design Dashboard,Released,Active,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/madagascar-ond,,,Madagascar,Grand Sud,OND,Design Dashboard,Released,,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/guatemala,,,Guatemala,,OND,Design Dashboard,Released,,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/guatemala-jja,,,Guatemala,,JJA,Design Dashboard,Released,Active,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/guatemala-aso,,,Guatemala,,ASO,Design Dashboard,Released,Active,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/guatemala-may,,,Guatemala,,May,Design Dashboard,Discontinued,,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/djibouti,,,Djibouti,,JAS,Design Dashboard,Released,,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/djibouti-mam,,,Djibouti,,MAM,Design Dashboard,Released,,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/djibouti-ond,,,Djibouti,,OND,Design Dashboard,Released,,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/djibouti-jjas,,,Djibouti,,JJAS,Design Dashboard,Released,,,,,
+https://iridl.ldeo.columbia.edu/fbfmaproom2/lesotho,,,Lesotho,,DJF,Design Dashboard,Released,,,,lms,maseru*newyork
+https://iridl.ldeo.columbia.edu/fbfmaproom2/lesotho-ond,,,Lesotho,,OND,Design Dashboard,Released,,,,lms,maseru*newyork
+https://fist.iri.columbia.edu/publications/docs/Niger_AA_FLexDashboard_simplified_JAS/,French,,Niger,,JAS,Public Monitoring Dashboard,Released,,,,,
+https://fist.iri.columbia.edu/publications/docs/Madagascar_AA_FLexDashboard_OND_2024/,,,Madagascar,,OND,Public Monitoring Dashboard,Released,,,,,
