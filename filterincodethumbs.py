@@ -1,45 +1,33 @@
-# example use:
-# python filterthumbs.py --filter Country Mali Season JAS Type "Design Dashboard" --output my_filtered_dashboards.html
-# python filterthumbs.py --filter Country Ethiopia
-# This will still generate filtered_dashboards.html
-# python filterthumbs.py --filter Country Ethiopia Season MAM,OND --output ethiopia_mam_ond.html
-
-
 import pandas as pd
-import argparse
 import sys
 
 # Load CSV
 df = pd.read_csv("dashboards.csv")
 
-# Parse command-line arguments
-parser = argparse.ArgumentParser(description="Generate HTML dashboards based on filtered CSV data.")
-parser.add_argument("--filter", nargs='*', help="Filter conditions as key-value pairs (e.g., --filter Country Mali Season JAS Type 'Design Dashboard'). For multiple values for a single column, use a comma-separated list (e.g., --filter Season JAS,OND).")
-parser.add_argument("--output", default="filtered_dashboards.html", help="Specify the output HTML filename (e.g., --output my_dashboards.html). Defaults to 'filtered_dashboards.html'.")
-args = parser.parse_args()
+# --- USER CONFIGURATION START ---
+# Define your filters here.
+# For a single value: "Column Name": "Value"
+# For multiple values: "Column Name": ["Value1", "Value2"]
+# Example:
+filters = {
+    "Type": "Design Dashboard",
+     "Country": ["Ethiopia", "Niger"],
+     "Season": ["MAM", "OND", "JAS"]
+}
+# --- USER CONFIGURATION END ---
 
 # Apply filters
-if args.filter:
-    filter_dict = {}
-    it = iter(args.filter)
-    for x in it:
-        try:
-            key = x
-            value = next(it)
-            if ',' in value:
-                filter_dict[key] = value.split(',')
-            else:
-                filter_dict[key] = [value]
-        except StopIteration:
-            print(f"Warning: Missing value for filter key '{x}'. Skipping.")
-            break
+if filters:
+    for column, values in filters.items():
+        # Ensure values is always a list for consistent iteration
+        if not isinstance(values, list):
+            values = [values]
 
-    for column, values in filter_dict.items():
         if column in df.columns:
             # Ensure the column in DataFrame is of string type for case-insensitive comparison if necessary
             df[column] = df[column].astype(str)
             # Filter rows where the column value is in the list of specified values (case-insensitive)
-            df = df[df[column].str.lower().isin([v.lower() for v in values])]
+            df = df[df[column].str.lower().isin([str(v).lower() for v in values])]
         else:
             print(f"Warning: Column '{column}' not found in the CSV. Skipping this filter.")
 
@@ -147,10 +135,8 @@ html += """
 </html>
 """
 
-# Save to file using the filename from arguments
-output_filename = args.output
-with open(output_filename, "w", encoding="utf-8") as f:
+# Save to file
+with open("filtered_dashboards.html", "w", encoding="utf-8") as f:
     f.write(html)
 
-print(f"Generated {output_filename}")
-
+print("Generated filtered_dashboards.html")
