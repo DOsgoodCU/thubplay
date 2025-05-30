@@ -21,20 +21,6 @@ import re # Import regex module for cleaning filenames
 # Load CSV
 df = pd.read_csv("dashboards.csv")
 
-# Define columns to EXCLUDE from the dynamic thumbnail title
-# These are typically internal IDs, URLs, or metadata not meant for display in the title.
-EXCLUDE_FROM_TITLE_COLUMNS = [
-    "CU URL",
-    "Local Host URL", # Assuming this might also be in your CSV in some cases
-    "Comment",
-    "Draft or released",
-    "Inactive",
-    "Specific date?",
-    "Behind VPN?",
-    "User",
-    "Password"
-]
-
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Generate HTML dashboards based on filtered CSV data.")
 parser.add_argument("--filter", nargs='*', help="Filter conditions as key-value pairs (e.g., --filter Country Mali Season JAS Type 'Design Dashboard'). For multiple values for a single column, use a comma-separated list (e.g., --filter Season JAS,OND).")
@@ -154,11 +140,16 @@ html = """<!DOCTYPE html>
 
 # Add each iframe block for filtered rows
 for _, row in df.iterrows():
+    # Construct a meaningful title for the dashboard
     title_parts = []
-    # Dynamically build title from all columns found in CSV, excluding specified ones
-    for col in df.columns:
-        if col not in EXCLUDE_FROM_TITLE_COLUMNS and pd.notna(row[col]) and str(row[col]).strip() != '':
-            title_parts.append(str(row[col]).strip())
+    if pd.notna(row["Country"]):
+        title_parts.append(row["Country"])
+    if pd.notna(row["SubRegion"]):
+        title_parts.append(row["SubRegion"])
+    if pd.notna(row["Season"]):
+        title_parts.append(row["Season"])
+    if pd.notna(row["Type"]):
+        title_parts.append(row["Type"])
 
     # Fallback if no specific parts are available to form a title
     if not title_parts:
@@ -166,8 +157,8 @@ for _, row in df.iterrows():
     else:
         title = " ".join(title_parts).strip()
 
-    # Ensure 'CU URL' column exists before trying to access it
-    url = row["CU URL"] if "CU URL" in df.columns else "#" # Fallback to '#' if column is missing
+
+    url = row["CU URL"] # Use the "CU URL" column for the link
 
     html += f"""
     <div class="iframe-wrapper">

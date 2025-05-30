@@ -1,48 +1,15 @@
-# example use:
-# python filterthumbs.py --filter Country Mali Season JAS Type "Design Dashboard"
-# Example output filename: country_mali_season_jas_type_designdashboard_dashboards.html
-# python filterthumbs.py
-# Output filename: all_dashboards.html
-# python filterthumbs.py --filter Country Ethiopia --output my_ethiopia_report.html
-# Output filename: my_ethiopia_report.html
-# python filterthumbs.py --filter Country Ethiopia Season MAM,OND Type "Design Dashboard","Public Monitoring Dashboard"
-
-#old, might still work, but might need tweaking
-# python filterthumbs.py --filter Country Mali Season JAS Type "Design Dashboard", --output my_filtered_dashboards.html
-# python filterthumbs.py --filter Country Ethiopia
-# This will still generate filtered_dashboards.html
-# python filterthumbs.py --filter Country Ethiopia Season MAM,OND --output ethiopia_mam_ond.html
-
 import pandas as pd
 import argparse
-import sys
-import re # Import regex module for cleaning filenames
 
 # Load CSV
 df = pd.read_csv("dashboards.csv")
 
-# Define columns to EXCLUDE from the dynamic thumbnail title
-# These are typically internal IDs, URLs, or metadata not meant for display in the title.
-EXCLUDE_FROM_TITLE_COLUMNS = [
-    "CU URL",
-    "Local Host URL", # Assuming this might also be in your CSV in some cases
-    "Comment",
-    "Draft or released",
-    "Inactive",
-    "Specific date?",
-    "Behind VPN?",
-    "User",
-    "Password"
-]
-
-# Parse command-line arguments
+# Parse command-line arguments for filtering
 parser = argparse.ArgumentParser(description="Generate HTML dashboards based on filtered CSV data.")
-parser.add_argument("--filter", nargs='*', help="Filter conditions as key-value pairs (e.g., --filter Country Mali Season JAS Type 'Design Dashboard'). For multiple values for a single column, use a comma-separated list (e.g., --filter Season JAS,OND).")
-parser.add_argument("--output", help="Specify the output HTML filename (e.g., --output my_dashboards.html). If not specified, a filename will be generated based on filter criteria.")
+parser.add_argument("--filter", nargs='*', help="Filter conditions as key-value pairs (e.g., --filter Country Ethiopia Type 'Design Dashboard'). For multiple values for a single column, use a comma-separated list (e.g., --filter Season JAS,OND).")
 args = parser.parse_args()
 
 # Apply filters
-filter_summary = [] # To build a summary for the default filename
 if args.filter:
     filter_dict = {}
     it = iter(args.filter)
@@ -52,10 +19,8 @@ if args.filter:
             value = next(it)
             if ',' in value:
                 filter_dict[key] = value.split(',')
-                filter_summary.append(f"{key}_{'_'.join(value.split(','))}")
             else:
                 filter_dict[key] = [value]
-                filter_summary.append(f"{key}_{value}")
         except StopIteration:
             print(f"Warning: Missing value for filter key '{x}'. Skipping.")
             break
@@ -68,22 +33,6 @@ if args.filter:
             df = df[df[column].str.lower().isin([v.lower() for v in values])]
         else:
             print(f"Warning: Column '{column}' not found in the CSV. Skipping this filter.")
-
-# Determine the output filename
-output_filename = args.output
-if not output_filename: # If output was not explicitly provided
-    if filter_summary:
-        # Create a clean, snake_case filename from the filter summary
-        base_name = "_".join(filter_summary)
-        # Remove any characters that are not alphanumeric, underscore, or hyphen
-        base_name = re.sub(r'[^\w-]', '', base_name)
-        # Replace multiple underscores with a single one
-        base_name = re.sub(r'__+', '_', base_name)
-        # Trim leading/trailing underscores
-        base_name = base_name.strip('_')
-        output_filename = f"{base_name}_dashboards.html".lower()
-    else:
-        output_filename = "all_dashboards.html" # Default if no filters are applied
 
 # Start HTML
 html = """<!DOCTYPE html>
@@ -154,11 +103,16 @@ html = """<!DOCTYPE html>
 
 # Add each iframe block for filtered rows
 for _, row in df.iterrows():
+    # Construct a meaningful title for the dashboard
     title_parts = []
-    # Dynamically build title from all columns found in CSV, excluding specified ones
-    for col in df.columns:
-        if col not in EXCLUDE_FROM_TITLE_COLUMNS and pd.notna(row[col]) and str(row[col]).strip() != '':
-            title_parts.append(str(row[col]).strip())
+    if pd.notna(row["Country"]):
+        title_parts.append(row["Country"])
+    if pd.notna(row["SubRegion (if applicable)"]):
+        title_parts.append(row["SubRegion (if applicable)"])
+    if pd.notna(row["Season"]):
+        title_parts.append(row["Season"])
+    if pd.notna(row["Type"]):
+        title_parts.append(row["Type"])
 
     # Fallback if no specific parts are available to form a title
     if not title_parts:
@@ -166,8 +120,8 @@ for _, row in df.iterrows():
     else:
         title = " ".join(title_parts).strip()
 
-    # Ensure 'CU URL' column exists before trying to access it
-    url = row["CU URL"] if "CU URL" in df.columns else "#" # Fallback to '#' if column is missing
+
+    url = row["CU URL"] # Use the "CU URL" column for the link [cite: 1]
 
     html += f"""
     <div class="iframe-wrapper">
@@ -184,8 +138,9 @@ html += """
 </html>
 """
 
-# Save to file using the determined filename
-with open(output_filename, "w", encoding="utf-8") as f:
+# Save to file
+with open("filtered_dashboards.html", "w", encoding="utf-8") as f:
     f.write(html)
 
-print(f"Generated {output_filename}")
+print("Generated filtered_dashboards.html")
+
