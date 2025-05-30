@@ -1,4 +1,9 @@
 CU URL,Comment,Local URL,Region,Country,SubRegion,Season,Type,Draft or released,Inactive,Specific date?,Restricted,Behind VPN?,User,Password
+https://dosgoodcu.github.io/thubplay/restricted_false_dashboards.html,All non-restricted,,,,,,,,,,FALSE,,,
+https://dosgoodcu.github.io/thubplay/type_publicmonitoringdashboard_restricted_false_dashboards.html,Monitoring Non-restricted,,,,,,,,,,FALSE,,,
+https://dosgoodcu.github.io/thubplay/type_designdashboard_restricted_false_dashboards.html,Public Design,,,,,,,,,,,,,
+https://dosgoodcu.github.io/thubplay/region_westafrica_restricted_false_dashboards.html,Public West Africa,,,,,,,,,,,,,
+https://dosgoodcu.github.io/thubplay/country_ethiopia_restricted_false_dashboards.html,Ethiopia all,,,,,,,,,,,,,
 https://iridl.ldeo.columbia.edu/fbfmaproom2/mali,,,West Africa,Mali,,JAS,Design Dashboard,Released,Active,April 4th 2025,FALSE,,,
 https://iridl.ldeo.columbia.edu/fbfmaproom2/mauritania,,,West Africa,Mauritania,,JAS,Design Dashboard,Released,Active,April 4th 2025,FALSE,,,
 http://iridl.ldeo.columbia.edu/fbfmaproom2/burkinafaso,,,West Africa,Burkina Faso,,JAS,Design Dashboard,Released,Active,April 4th 2025,FALSE,,,
