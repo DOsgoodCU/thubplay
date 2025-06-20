@@ -1,34 +1,37 @@
-# example use:
-# python filterthumbs.py --filter Country Mali Season JAS Type "Design Dashboard"
-# Example output filename: country_mali_season_jas_type_designdashboard_dashboards.html
-# python filterthumbs.py
-# Output filename: all_dashboards.html
-# python filterthumbs.py --filter Country Ethiopia --output my_ethiopia_report.html
-# Output filename: my_ethiopia_report.html
-# python filterthumbs.py --filter Country Ethiopia Season MAM,OND Type "Design Dashboard","Public Monitoring Dashboard"
-
-#old, might still work, but might need tweaking
-# python filterthumbs.py --filter Country Mali Season JAS Type "Design Dashboard", --output my_filtered_dashboards.html
-# python filterthumbs.py --filter Country Ethiopia
-# This will still generate filtered_dashboards.html
-# python filterthumbs.py --filter Country Ethiopia Season MAM,OND --output ethiopia_mam_ond.html
-
 import pandas as pd
 import argparse
 import sys
-import re # Import regex module for cleaning filenames
+import re
+import os
+import hashlib
+import time
+
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+
+# --- Configuration for Thumbnails ---
+THUMBNAIL_DIR = "thumbnails"
+THUMBNAIL_WIDTH = 1280
+THUMBNAIL_HEIGHT = 720
+THUMBNAIL_CLIP_WIDTH = 200
+THUMBNAIL_CLIP_HEIGHT = 200
+PAGE_LOAD_WAIT_TIME = 20
+POST_LOAD_SLEEP_TIME = 5
 
 # Load CSV
 df = pd.read_csv("dashboards.csv")
 
 # Define columns to EXCLUDE from the dynamic thumbnail title
-# These are typically internal IDs, URLs, or metadata not meant for display in the title.
 EXCLUDE_FROM_TITLE_COLUMNS = [
     "CU URL",
-    "Local Host URL", # Assuming this might also be in your CSV in some cases
+    "Local Host URL",
     "Comment",
     "Draft or released",
-    "Inactive",
+    "Inactive (I)",
     "Specific date?",
     "Behind VPN?",
     "User",
@@ -36,13 +39,16 @@ EXCLUDE_FROM_TITLE_COLUMNS = [
 ]
 
 # Parse command-line arguments
-parser = argparse.ArgumentParser(description="Generate HTML dashboards based on filtered CSV data.")
+parser = argparse.ArgumentParser(description="Generate HTML dashboards based on filtered CSV data with cached, refreshed, or direct iframe content.")
 parser.add_argument("--filter", nargs='*', help="Filter conditions as key-value pairs (e.g., --filter Country Mali Season JAS Type 'Design Dashboard'). For multiple values for a single column, use a comma-separated list (e.g., --filter Season JAS,OND).")
 parser.add_argument("--output", help="Specify the output HTML filename (e.g., --output my_dashboards.html). If not specified, a filename will be generated based on filter criteria.")
+parser.add_argument("--refresh-thumbnails", action="store_true", help="Force regeneration of all thumbnails, ignoring cached versions.")
+# New command-line option for direct iframes
+parser.add_argument("--direct-iframes", action="store_true", help="Generate HTML using iframes directly for all dashboards, skipping thumbnail generation/caching.")
 args = parser.parse_args()
 
 # Apply filters
-filter_summary = [] # To build a summary for the default filename
+filter_summary = []
 if args.filter:
     filter_dict = {}
     it = iter(args.filter)
@@ -62,28 +68,75 @@ if args.filter:
 
     for column, values in filter_dict.items():
         if column in df.columns:
-            # Ensure the column in DataFrame is of string type for case-insensitive comparison if necessary
             df[column] = df[column].astype(str)
-            # Filter rows where the column value is in the list of specified values (case-insensitive)
             df = df[df[column].str.lower().isin([v.lower() for v in values])]
         else:
             print(f"Warning: Column '{column}' not found in the CSV. Skipping this filter.")
 
 # Determine the output filename
 output_filename = args.output
-if not output_filename: # If output was not explicitly provided
+if not output_filename:
     if filter_summary:
-        # Create a clean, snake_case filename from the filter summary
         base_name = "_".join(filter_summary)
-        # Remove any characters that are not alphanumeric, underscore, or hyphen
         base_name = re.sub(r'[^\w-]', '', base_name)
-        # Replace multiple underscores with a single one
         base_name = re.sub(r'__+', '_', base_name)
-        # Trim leading/trailing underscores
         base_name = base_name.strip('_')
         output_filename = f"{base_name}_dashboards.html".lower()
     else:
-        output_filename = "all_dashboards.html" # Default if no filters are applied
+        output_filename = "all_dashboards.html"
+
+# --- Add 'cached' to filename if cached option is used and not direct iframes ---
+# 'cached' suffix implies that thumbnails are being used AND they are not forced to refresh
+if not args.refresh_thumbnails and not args.direct_iframes:
+    name, ext = os.path.splitext(output_filename)
+    output_filename = f"{name}_cached{ext}"
+    print(f"Using cached thumbnails. Output filename will be: {output_filename}")
+elif args.direct_iframes:
+    # If direct iframes are used, no cached suffix is relevant
+    print("Generating HTML with direct iframe embeds (no thumbnails).")
+else: # args.refresh_thumbnails is True
+    print("Generating HTML with refreshed thumbnails.")
+
+
+# --- Thumbnail Generation Logic ---
+# Ensure thumbnail directory exists only if we are using thumbnails
+if not args.direct_iframes:
+    if not os.path.exists(THUMBNAIL_DIR):
+        os.makedirs(THUMBNAIL_DIR)
+
+# Setup Selenium WebDriver in headless mode if needed for thumbnail generation
+# Driver is only initialized if we are NOT in direct-iframes mode AND
+# either a refresh is forced OR some thumbnails are missing
+driver = None
+if not args.direct_iframes and df["CU URL"].any():
+    should_initialize_driver = args.refresh_thumbnails
+    if not should_initialize_driver: # If not forced refresh, check if any thumbnail is missing
+        for _, row in df.iterrows():
+            url = row["CU URL"] if "CU URL" in df.columns and pd.notna(row["CU URL"]) else None
+            if url and url != "#":
+                url_hash = hashlib.md5(str(url).encode('utf-8')).hexdigest()
+                thumbnail_path = os.path.join(THUMBNAIL_DIR, f"{url_hash}.png")
+                if not os.path.exists(thumbnail_path):
+                    should_initialize_driver = True
+                    break # Found a missing thumbnail, so driver is needed
+
+    if should_initialize_driver:
+        print("Initializing headless browser for thumbnail generation...")
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")
+        options.add_argument(f"--window-size={THUMBNAIL_WIDTH},{THUMBNAIL_HEIGHT}")
+        options.add_argument("--hide-scrollbars")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+
+        try:
+            driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+            print("Browser initialized.")
+        except Exception as e:
+            print(f"Error initializing browser: {e}")
+            print("Thumbnails will NOT be generated. HTML will use iframes directly if CU URL exists.")
+            driver = None # Set driver to None if initialization fails
 
 # Start HTML
 html = """<!DOCTYPE html>
@@ -117,11 +170,17 @@ html = """<!DOCTYPE html>
             border-radius: 8px;
             text-align: center;
         }
-        .iframe-wrapper iframe {
-            width: calc(var(--framewidth) * var(--framemult));
-            height: calc(var(--framewidth) * var(--framemult) / var(--wrapperframeratiow2h));
-            transform: scale(0.3);
-            transform-origin: top left;
+        .thumbnail-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        /* New style for iframes in direct mode */
+        .direct-iframe {
+            width: 100%; /* Make iframe fill its wrapper */
+            height: 100%;
+            border: none; /* No border for direct iframes inside wrapper */
         }
         .clickable-overlay {
             position: absolute;
@@ -153,29 +212,81 @@ html = """<!DOCTYPE html>
 """
 
 # Add each iframe block for filtered rows
-for _, row in df.iterrows():
-    title_parts = []
-    # Dynamically build title from all columns found in CSV, excluding specified ones
-    for col in df.columns:
-        if col not in EXCLUDE_FROM_TITLE_COLUMNS and pd.notna(row[col]) and str(row[col]).strip() != '':
-            title_parts.append(str(row[col]).strip())
-
-    # Fallback if no specific parts are available to form a title
-    if not title_parts:
-        title = "Untitled Dashboard"
+for index, row in df.iterrows():
+    # --- Title Generation Logic ---
+    title = ""
+    # Check if 'Title' column exists and is not blank
+    if "Title" in df.columns and pd.notna(row["Title"]) and str(row["Title"]).strip() != '':
+        title = str(row["Title"]).strip()
     else:
-        title = " ".join(title_parts).strip()
+        # Fallback to dynamic generation if 'Title' column is absent or blank
+        title_parts = []
+        for col in df.columns:
+            if col not in EXCLUDE_FROM_TITLE_COLUMNS and pd.notna(row[col]) and str(row[col]).strip() != '':
+                title_parts.append(str(row[col]).strip())
 
-    # Ensure 'CU URL' column exists before trying to access it
-    url = row["CU URL"] if "CU URL" in df.columns else "#" # Fallback to '#' if column is missing
+        if not title_parts:
+            title = "Untitled Dashboard"
+        else:
+            title = " ".join(title_parts).strip()
+
+    url = row["CU URL"] if "CU URL" in df.columns and pd.notna(row["CU URL"]) else "#"
+
+    display_content = ""
+    if args.direct_iframes:
+        # Mode: Direct Iframes
+        if url != '#':
+            display_content = f'<iframe src="{url}" class="direct-iframe"></iframe>'
+        else:
+            display_content = '<div style="background-color:#ccc; color:#666; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">No Content</div>'
+    else:
+        # Mode: Thumbnails (cached or refreshed)
+        thumbnail_src = ""
+        if driver and url != "#": # Only try to generate if driver is initialized and URL is valid
+            url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
+            thumbnail_filename = f"{url_hash}.png"
+            thumbnail_path = os.path.join(THUMBNAIL_DIR, thumbnail_filename)
+
+            if args.refresh_thumbnails or not os.path.exists(thumbnail_path):
+                try:
+                    print(f"Generating thumbnail for: {url}")
+                    driver.get(url)
+                    WebDriverWait(driver, PAGE_LOAD_WAIT_TIME).until(
+                        EC.presence_of_element_located((By.TAG_NAME, "body"))
+                    )
+                    time.sleep(POST_LOAD_SLEEP_TIME)
+
+                    driver.save_screenshot(thumbnail_path)
+                    print(f"Thumbnail saved: {thumbnail_path}")
+
+                except Exception as e:
+                    print(f"Could not generate thumbnail for {url}: {e}")
+                    thumbnail_path = None
+            
+            if thumbnail_path and os.path.exists(thumbnail_path):
+                thumbnail_src = thumbnail_path
+        
+        if thumbnail_src:
+            display_content = f'<img src="{thumbnail_src}" alt="{title}" class="thumbnail-image">'
+        elif url != '#':
+            print(f"Falling back to iframe for {url} due to missing/failed thumbnail or driver issue.")
+            display_content = f'<iframe src="{url}" class="direct-iframe"></iframe>' # Fallback uses direct iframe now
+        else:
+            display_content = '<div style="background-color:#ccc; color:#666; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">No Content</div>'
+
 
     html += f"""
     <div class="iframe-wrapper">
         <div class="iframe-title">{title}</div>
         <a href="{url}" target="_blank" class="clickable-overlay"></a>
-        <iframe src="{url}"></iframe>
+        {display_content}
     </div>
     """
+
+# Close WebDriver
+if driver:
+    print("Closing browser.")
+    driver.quit()
 
 # Close HTML
 html += """
