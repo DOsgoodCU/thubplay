@@ -24,6 +24,7 @@ POST_LOAD_SLEEP_TIME = 5
 
 # Load CSV
 df = pd.read_csv("dashboards.csv")
+print(f"DEBUG: Initial DataFrame empty: {df.empty}, length: {len(df)}") # DEBUG PRINT
 
 # Define columns to EXCLUDE from the dynamic thumbnail title
 EXCLUDE_FROM_TITLE_COLUMNS = [
@@ -68,10 +69,16 @@ if args.filter:
 
     for column, values in filter_dict.items():
         if column in df.columns:
+            # Ensure column is string type for case-insensitive comparison
             df[column] = df[column].astype(str)
             df = df[df[column].str.lower().isin([v.lower() for v in values])]
         else:
             print(f"Warning: Column '{column}' not found in the CSV. Skipping this filter.")
+    print(f"DEBUG: DataFrame empty after filters: {df.empty}, length: {len(df)}") # DEBUG PRINT
+    if not df.empty:
+        print(f"DEBUG: First 5 rows after filters:\n{df.head().to_string()}") # DEBUG PRINT
+    else:
+        print("DEBUG: No rows left after applying filters.")
 
 # Determine the output filename
 output_filename = args.output
@@ -101,12 +108,16 @@ else: # args.refresh_thumbnails is True
 # Example: "all_dashboards_cached.html" -> "thumbnails/all_dashboards_cached/"
 thumbnail_subdir_name = os.path.splitext(output_filename)[0]
 CURRENT_THUMBNAIL_DIR = os.path.join(THUMBNAIL_BASE_DIR, thumbnail_subdir_name)
+print(f"DEBUG: Thumbnails will be stored in: {os.path.abspath(CURRENT_THUMBNAIL_DIR)}") # DEBUG PRINT
 
 # --- Thumbnail Generation Logic ---
 # Ensure unique thumbnail subdirectory exists only if we are using thumbnails
 if not args.direct_iframes:
     if not os.path.exists(CURRENT_THUMBNAIL_DIR):
         os.makedirs(CURRENT_THUMBNAIL_DIR)
+        print(f"DEBUG: Created thumbnail directory: {CURRENT_THUMBNAIL_DIR}") # DEBUG PRINT
+    else:
+        print(f"DEBUG: Thumbnail directory already exists: {CURRENT_THUMBNAIL_DIR}") # DEBUG PRINT
 
 # Setup Selenium WebDriver in headless mode if needed for thumbnail generation
 # Driver is only initialized if we are NOT in direct-iframes mode AND
@@ -219,77 +230,81 @@ html = """<!DOCTYPE html>
 """
 
 # Add each iframe block for filtered rows
-for index, row in df.iterrows():
-    # --- Title Generation Logic ---
-    title = ""
-    # Check if 'Title' column exists and is not blank
-    if "Title" in df.columns and pd.notna(row["Title"]) and str(row["Title"]).strip() != '':
-        title = str(row["Title"]).strip()
-    else:
-        # Fallback to dynamic generation if 'Title' column is absent or blank
-        title_parts = []
-        for col in df.columns:
-            if col not in EXCLUDE_FROM_TITLE_COLUMNS and pd.notna(row[col]) and str(row[col]).strip() != '':
-                title_parts.append(str(row[col]).strip())
-
-        if not title_parts:
-            title = "Untitled Dashboard"
+if df.empty:
+    print("DEBUG: DataFrame is empty, no dashboard blocks will be added.") # DEBUG PRINT
+else:
+    for index, row in df.iterrows():
+        # --- Title Generation Logic ---
+        title = ""
+        # Check if 'Title' column exists and is not blank
+        if "Title" in df.columns and pd.notna(row["Title"]) and str(row["Title"]).strip() != '':
+            title = str(row["Title"]).strip()
         else:
-            title = " ".join(title_parts).strip()
+            # Fallback to dynamic generation if 'Title' column is absent or blank
+            title_parts = []
+            for col in df.columns:
+                if col not in EXCLUDE_FROM_TITLE_COLUMNS and pd.notna(row[col]) and str(row[col]).strip() != '':
+                    title_parts.append(str(row[col]).strip())
 
-    url = row["CU URL"] if "CU URL" in df.columns and pd.notna(row["CU URL"]) else "#"
+            if not title_parts:
+                title = "Untitled Dashboard"
+            else:
+                title = " ".join(title_parts).strip()
 
-    display_content = ""
-    if args.direct_iframes:
-        # Mode: Direct Iframes with old scaling formatting
-        if url != '#':
-            display_content = f'<iframe src="{url}"></iframe>'
+        url = row["CU URL"] if "CU URL" in df.columns and pd.notna(row["CU URL"]) else "#"
+
+        display_content = ""
+        if args.direct_iframes:
+            # Mode: Direct Iframes with old scaling formatting
+            if url != '#':
+                display_content = f'<iframe src="{url}"></iframe>'
+            else:
+                display_content = '<div style="background-color:#ccc; color:#666; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">No Content</div>'
         else:
-            display_content = '<div style="background-color:#ccc; color:#666; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">No Content</div>'
-    else:
-        # Mode: Thumbnails (cached or refreshed)
-        thumbnail_src = ""
-        # Use CURRENT_THUMBNAIL_DIR for saving/loading thumbnails
-        if driver and url != "#": # Only try to generate if driver is initialized and URL is valid
-            url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
-            thumbnail_filename = f"{url_hash}.png"
-            thumbnail_path = os.path.join(CURRENT_THUMBNAIL_DIR, thumbnail_filename)
+            # Mode: Thumbnails (cached or refreshed)
+            thumbnail_src = ""
+            # Use CURRENT_THUMBNAIL_DIR for saving/loading thumbnails
+            if driver and url != "#": # Only try to generate if driver is initialized and URL is valid
+                url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
+                thumbnail_filename = f"{url_hash}.png"
+                thumbnail_path = os.path.join(CURRENT_THUMBNAIL_DIR, thumbnail_filename)
 
-            if args.refresh_thumbnails or not os.path.exists(thumbnail_path):
-                try:
-                    print(f"Generating thumbnail for: {url}")
-                    driver.get(url)
-                    WebDriverWait(driver, PAGE_LOAD_WAIT_TIME).until(
-                        EC.presence_of_element_located((By.TAG_NAME, "body"))
-                    )
-                    time.sleep(POST_LOAD_SLEEP_TIME)
+                if args.refresh_thumbnails or not os.path.exists(thumbnail_path):
+                    try:
+                        print(f"DEBUG: Generating thumbnail for: {url}") # DEBUG PRINT
+                        driver.get(url)
+                        WebDriverWait(driver, PAGE_LOAD_WAIT_TIME).until(
+                            EC.presence_of_element_located((By.TAG_NAME, "body"))
+                        )
+                        time.sleep(POST_LOAD_SLEEP_TIME)
 
-                    driver.save_screenshot(thumbnail_path)
-                    print(f"Thumbnail saved: {thumbnail_path}")
+                        driver.save_screenshot(thumbnail_path)
+                        print(f"DEBUG: Thumbnail saved: {thumbnail_path}") # DEBUG PRINT
 
-                except Exception as e:
-                    print(f"Could not generate thumbnail for {url}: {e}")
-                    thumbnail_path = None
+                    except Exception as e:
+                        print(f"ERROR: Could not generate thumbnail for {url}: {e}") # DEBUG PRINT
+                        thumbnail_path = None
+                
+                if thumbnail_path and os.path.exists(thumbnail_path):
+                    # Use relative path for the HTML src attribute
+                    thumbnail_src = os.path.join(thumbnail_subdir_name, thumbnail_filename)
             
-            if thumbnail_path and os.path.exists(thumbnail_path):
-                thumbnail_src = os.path.join(thumbnail_subdir_name, thumbnail_filename) # Path relative to HTML for src attribute
-        
-        if thumbnail_src:
-            display_content = f'<img src="{thumbnail_src}" alt="{title}" class="thumbnail-image">'
-        elif url != '#':
-            print(f"Falling back to iframe for {url} due to missing/failed thumbnail or driver issue.")
-            display_content = f'<iframe src="{url}"></iframe>' # Fallback uses direct iframe without extra class
-        else:
-            display_content = '<div style="background-color:#ccc; color:#666; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">No Content</div>'
+            if thumbnail_src:
+                display_content = f'<img src="{thumbnail_src}" alt="{title}" class="thumbnail-image">'
+            elif url != '#':
+                print(f"DEBUG: Falling back to iframe for {url} due to missing/failed thumbnail or driver issue.") # DEBUG PRINT
+                display_content = f'<iframe src="{url}"></iframe>' # Fallback uses direct iframe without extra class
+            else:
+                display_content = '<div style="background-color:#ccc; color:#666; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">No Content</div>'
 
-
-    html += f"""
-    <div class="iframe-wrapper">
-        <div class="iframe-title">{title}</div>
-        <a href="{url}" target="_blank" class="clickable-overlay"></a>
-        {display_content}
-    </div>
-    """
+        print(f"DEBUG: Processing row {index}, Title: '{title}', URL: '{url}'. Display content starts with: '{display_content[:50]}...'") # DEBUG PRINT
+        html += f"""
+        <div class="iframe-wrapper">
+            <div class="iframe-title">{title}</div>
+            <a href="{url}" target="_blank" class="clickable-overlay"></a>
+            {display_content}
+        </div>
+        """
 
 # Close WebDriver
 if driver:
@@ -304,5 +319,14 @@ html += """
 """
 
 # Save to file using the determined filename
-with open(output_filename, "w", encoding="utf-8") as f:
-    f.write
+print(f"DEBUG: HTML content length before writing: {len(html)}") # DEBUG PRINT
+if len(html) < 200: # A very rough check for "empty" content beyond boilerplate
+    print("WARNING: Generated HTML content appears unusually short, it might be empty or nearly empty.") # DEBUG PRINT
+
+try:
+    with open(output_filename, "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"Generated {output_filename}")
+except Exception as e:
+    print(f"ERROR: Could not write HTML file {output_filename}: {e}") # DEBUG PRINT
+
