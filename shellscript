@@ -1,0 +1,1 @@
+python filterthumbs.py --refresh-thumbnails --filter Public Unlocked # generate full set of public unlocked dashboards

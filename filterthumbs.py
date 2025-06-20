@@ -14,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 # --- Configuration for Thumbnails ---
-THUMBNAIL_DIR = "thumbnails"
+THUMBNAIL_BASE_DIR = "thumbnails" # Base directory for all thumbnail subfolders
 THUMBNAIL_WIDTH = 1280
 THUMBNAIL_HEIGHT = 720
 THUMBNAIL_CLIP_WIDTH = 200
@@ -97,12 +97,16 @@ elif args.direct_iframes:
 else: # args.refresh_thumbnails is True
     print("Generating HTML with refreshed thumbnails.")
 
+# --- Define unique thumbnail directory for this run ---
+# Example: "all_dashboards_cached.html" -> "thumbnails/all_dashboards_cached/"
+thumbnail_subdir_name = os.path.splitext(output_filename)[0]
+CURRENT_THUMBNAIL_DIR = os.path.join(THUMBNAIL_BASE_DIR, thumbnail_subdir_name)
 
 # --- Thumbnail Generation Logic ---
-# Ensure thumbnail directory exists only if we are using thumbnails
+# Ensure unique thumbnail subdirectory exists only if we are using thumbnails
 if not args.direct_iframes:
-    if not os.path.exists(THUMBNAIL_DIR):
-        os.makedirs(THUMBNAIL_DIR)
+    if not os.path.exists(CURRENT_THUMBNAIL_DIR):
+        os.makedirs(CURRENT_THUMBNAIL_DIR)
 
 # Setup Selenium WebDriver in headless mode if needed for thumbnail generation
 # Driver is only initialized if we are NOT in direct-iframes mode AND
@@ -115,7 +119,8 @@ if not args.direct_iframes and df["CU URL"].any():
             url = row["CU URL"] if "CU URL" in df.columns and pd.notna(row["CU URL"]) else None
             if url and url != "#":
                 url_hash = hashlib.md5(str(url).encode('utf-8')).hexdigest()
-                thumbnail_path = os.path.join(THUMBNAIL_DIR, f"{url_hash}.png")
+                # Use CURRENT_THUMBNAIL_DIR for checking existence
+                thumbnail_path = os.path.join(CURRENT_THUMBNAIL_DIR, f"{url_hash}.png")
                 if not os.path.exists(thumbnail_path):
                     should_initialize_driver = True
                     break # Found a missing thumbnail, so driver is needed
@@ -176,11 +181,13 @@ html = """<!DOCTYPE html>
             object-fit: cover;
             display: block;
         }
-        /* New style for iframes in direct mode */
-        .direct-iframe {
-            width: 100%; /* Make iframe fill its wrapper */
-            height: 100%;
-            border: none; /* No border for direct iframes inside wrapper */
+        /* Restored original iframe styling for iframes inside iframe-wrapper */
+        .iframe-wrapper iframe {
+            width: calc(var(--framewidth) * var(--framemult));
+            height: calc(var(--framewidth) * var(--framemult) / var(--wrapperframeratiow2h));
+            transform: scale(0.3);
+            transform-origin: top left;
+            border: none; /* Keep border none for a cleaner look */
         }
         .clickable-overlay {
             position: absolute;
@@ -234,18 +241,19 @@ for index, row in df.iterrows():
 
     display_content = ""
     if args.direct_iframes:
-        # Mode: Direct Iframes
+        # Mode: Direct Iframes with old scaling formatting
         if url != '#':
-            display_content = f'<iframe src="{url}" class="direct-iframe"></iframe>'
+            display_content = f'<iframe src="{url}"></iframe>'
         else:
             display_content = '<div style="background-color:#ccc; color:#666; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">No Content</div>'
     else:
         # Mode: Thumbnails (cached or refreshed)
         thumbnail_src = ""
+        # Use CURRENT_THUMBNAIL_DIR for saving/loading thumbnails
         if driver and url != "#": # Only try to generate if driver is initialized and URL is valid
             url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
             thumbnail_filename = f"{url_hash}.png"
-            thumbnail_path = os.path.join(THUMBNAIL_DIR, thumbnail_filename)
+            thumbnail_path = os.path.join(CURRENT_THUMBNAIL_DIR, thumbnail_filename)
 
             if args.refresh_thumbnails or not os.path.exists(thumbnail_path):
                 try:
@@ -264,13 +272,13 @@ for index, row in df.iterrows():
                     thumbnail_path = None
             
             if thumbnail_path and os.path.exists(thumbnail_path):
-                thumbnail_src = thumbnail_path
+                thumbnail_src = os.path.join(thumbnail_subdir_name, thumbnail_filename) # Path relative to HTML for src attribute
         
         if thumbnail_src:
             display_content = f'<img src="{thumbnail_src}" alt="{title}" class="thumbnail-image">'
         elif url != '#':
             print(f"Falling back to iframe for {url} due to missing/failed thumbnail or driver issue.")
-            display_content = f'<iframe src="{url}" class="direct-iframe"></iframe>' # Fallback uses direct iframe now
+            display_content = f'<iframe src="{url}"></iframe>' # Fallback uses direct iframe without extra class
         else:
             display_content = '<div style="background-color:#ccc; color:#666; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">No Content</div>'
 
@@ -297,6 +305,4 @@ html += """
 
 # Save to file using the determined filename
 with open(output_filename, "w", encoding="utf-8") as f:
-    f.write(html)
-
-print(f"Generated {output_filename}")
+    f.write
