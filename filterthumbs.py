@@ -155,7 +155,7 @@ if not args.direct_iframes and df["CU URL"].any():
             driver = None # Set driver to None if initialization fails
 
 # Start HTML
-html = """<!DOCTYPE html>
+html = """<!DOCTYPE HTML>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -186,13 +186,17 @@ html = """<!DOCTYPE html>
             border-radius: 8px;
             text-align: center;
         }
+        /* Style for thumbnail images to match scaled iframes */
         .thumbnail-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            width: calc(var(--framewidth) * var(--framemult));
+            height: calc(var(--framewidth) * var(--framemult) / var(--wrapperframeratiow2h));
+            transform: scale(0.3);
+            transform-origin: top left;
             display: block;
+            /* object-fit: cover; -- You can uncomment this if you prefer the image to cover the scaled area,
+                                  -- but it might crop if aspect ratios differ significantly after scaling. */
         }
-        /* Restored original iframe styling for iframes inside iframe-wrapper */
+        /* Style for iframes inside iframe-wrapper (used for direct iframes and fallbacks) */
         .iframe-wrapper iframe {
             width: calc(var(--framewidth) * var(--framemult));
             height: calc(var(--framewidth) * var(--framemult) / var(--wrapperframeratiow2h));
@@ -286,8 +290,9 @@ else:
                         thumbnail_path = None
                 
                 if thumbnail_path and os.path.exists(thumbnail_path):
-                    # Use relative path for the HTML src attribute
-                    thumbnail_src = os.path.join(thumbnail_subdir_name, thumbnail_filename)
+                    # CORRECTED: Use THUMBNAIL_BASE_DIR AND thumbnail_subdir_name for the HTML src attribute to make it relative to the HTML file
+                    thumbnail_src = os.path.join(THUMBNAIL_BASE_DIR, thumbnail_subdir_name, thumbnail_filename)
+                    print(f"DEBUG: Thumbnail SRC in HTML will be: {thumbnail_src}") # DEBUG PRINT
             
             if thumbnail_src:
                 display_content = f'<img src="{thumbnail_src}" alt="{title}" class="thumbnail-image">'
@@ -329,4 +334,3 @@ try:
     print(f"Generated {output_filename}")
 except Exception as e:
     print(f"ERROR: Could not write HTML file {output_filename}: {e}") # DEBUG PRINT
-
